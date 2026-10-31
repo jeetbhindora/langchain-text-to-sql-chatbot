@@ -48,6 +48,50 @@ LANGCHAIN_TEXT_TO_SQL/
 └── venv/               # Virtual environment (not uploaded)
 ```
 
+## 🧩 System Architecture
+
+
+flowchart TD
+    U["User"] --> UI["Streamlit UI<br/>app.py"]
+    UI --> WF["ask_database()<br/>llm.py"]
+
+    WF --> SG["Deterministic Security Guard"]
+    SG --> IC["Intent Classification<br/>LangChain + Gemini"]
+
+    IC -->|CHAT| CC["Conversational Response<br/>Gemini"]
+    IC -->|DATABASE| OC["Operation Classification<br/>READ / WRITE / SCHEMA_CHANGE"]
+
+    OC -->|WRITE or SCHEMA_CHANGE| RJ["Reject Request"]
+    OC -->|READ| SC["Retrieve Database Schema<br/>db.get_table_info()"]
+
+    SC --> DBI["LangChain SQLDatabase"]
+    DBI --> RO[("PostgreSQL<br/>Read-only connection")]
+
+    SC --> TS["Unknown Table / Entity Check"]
+    TS --> FR["Follow-up Question Resolution"]
+    FR --> SGQ["SQL Generation<br/>LangChain + Gemini"]
+    SGQ --> NS["SQL Normalization<br/>SQLGlot"]
+    NS --> VAL["SQL Validation<br/>Single SELECT, approved tables,<br/>safe functions and JOINs"]
+
+    VAL --> EX["EXPLAIN FORMAT JSON<br/>Estimate Query Cost"]
+    EX -->|Valid and within cost limit| EXEC["Safe SQL Execution<br/>Read-only transaction<br/>10-second timeout<br/>500-row limit"]
+    EX -->|Invalid or expensive| RJ
+
+    EXEC --> RO
+    EXEC --> ANS["Natural-language Answer Generation<br/>LangChain + Gemini"]
+
+    CC --> OUT["Response to Streamlit"]
+    ANS --> OUT
+    RJ --> OUT
+    OUT --> UI
+
+    UI --> HIST["Query History Display"]
+    WF --> SAVE["Save Query History"]
+    SAVE --> ADMIN[("PostgreSQL<br/>Admin connection")]
+    HIST --> ADMIN
+    ADMIN --> HDB["query_history table"]
+
+
 ## ⚙️ Installation and Setup
 
 ### 1. Clone the repository
