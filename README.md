@@ -50,7 +50,7 @@ LANGCHAIN_TEXT_TO_SQL/
 
 ## 🧩 System Architecture
 
-
+```mermaid
 flowchart TD
     U["User"] --> UI["Streamlit UI<br/>app.py"]
     UI --> WF["ask_database()<br/>llm.py"]
@@ -62,7 +62,7 @@ flowchart TD
     IC -->|DATABASE| OC["Operation Classification<br/>READ / WRITE / SCHEMA_CHANGE"]
 
     OC -->|WRITE or SCHEMA_CHANGE| RJ["Reject Request"]
-    OC -->|READ| SC["Retrieve Database Schema<br/>db.get_table_info()"]
+    OC -->|READ| SC["Retrieve Database Schema"]
 
     SC --> DBI["LangChain SQLDatabase"]
     DBI --> RO[("PostgreSQL<br/>Read-only connection")]
@@ -74,23 +74,23 @@ flowchart TD
     NS --> VAL["SQL Validation<br/>Single SELECT, approved tables,<br/>safe functions and JOINs"]
 
     VAL --> EX["EXPLAIN FORMAT JSON<br/>Estimate Query Cost"]
-    EX -->|Valid and within cost limit| EXEC["Safe SQL Execution<br/>Read-only transaction<br/>10-second timeout<br/>500-row limit"]
+    EX -->|Valid| EXEC["Safe SQL Execution<br/>Read-only transaction<br/>10-second timeout<br/>500-row limit"]
     EX -->|Invalid or expensive| RJ
 
     EXEC --> RO
-    EXEC --> ANS["Natural-language Answer Generation<br/>LangChain + Gemini"]
+    EXEC --> ANS["Natural Language Answer Generation<br/>LangChain + Gemini"]
 
     CC --> OUT["Response to Streamlit"]
     ANS --> OUT
     RJ --> OUT
     OUT --> UI
 
-    UI --> HIST["Query History Display"]
     WF --> SAVE["Save Query History"]
     SAVE --> ADMIN[("PostgreSQL<br/>Admin connection")]
-    HIST --> ADMIN
     ADMIN --> HDB["query_history table"]
-
+    UI --> HIST["Query History Display"]
+    HIST --> ADMIN
+```
 
 ## ⚙️ Installation and Setup
 
